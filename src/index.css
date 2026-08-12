@@ -6,17 +6,15 @@
   --font-display: "Space Grotesk", ui-sans-serif, sans-serif;
   --font-mono: "Space Mono", ui-monospace, SFMono-Regular, monospace;
 
-  /* Neumorphic / soft-UI palette — one neutral surface, one accent gradient */
-  --color-surface: #e9e9ec;
-  --color-ink: #33363c;
-  --color-muted: #5b5f66;
+  /* Neumorphic / soft-UI palette — light neutral white/gray surface,
+     one strong, fully-saturated orange accent (no muted variants). */
+  --color-surface: #f4f4f6;
+  --color-ink: #2b2d31;
+  --color-muted: #6b6e74;
   --color-shadow-light: #ffffff;
-  --color-shadow-dark: #babdc5;
+  --color-shadow-dark: #d7d9dc;
   --color-accent: #e8590c;
-  --color-accent-2: #ff9a52;
-  --color-accent-dark: #a8390a;
-  --color-accent-light: #ffb27a;
-  --color-screen: #24272c;
+  --color-accent-2: #ff7a1a;
 }
 
 html {
@@ -46,7 +44,7 @@ body {
 
 a:focus-visible,
 button:focus-visible {
-  outline: 2px solid var(--color-accent-dark);
+  outline: 2px solid var(--color-accent);
   outline-offset: 3px;
   border-radius: 8px;
 }
@@ -78,11 +76,6 @@ button:focus-visible {
 .neu-inset-sm {
   background: var(--color-surface);
   box-shadow: inset 3px 3px 6px var(--color-shadow-dark), inset -3px -3px 6px var(--color-shadow-light);
-}
-
-.neu-screen {
-  background: var(--color-screen);
-  box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.55), inset -2px -2px 6px rgba(255, 255, 255, 0.04);
 }
 
 /* Tactile press feedback — the signature microinteraction: raised
