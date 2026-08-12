@@ -1,31 +1,101 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Outfit", sans-serif;
-  --font-serif: "Playfair Display", Georgia, serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", ui-sans-serif, sans-serif;
+  --font-mono: "Space Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Neumorphic / soft-UI palette — light neutral white/gray surface,
+     one strong, fully-saturated orange accent (no muted variants). */
+  --color-surface: #f4f4f6;
+  --color-ink: #2b2d31;
+  --color-muted: #6b6e74;
+  --color-shadow-light: #ffffff;
+  --color-shadow-dark: #d7d9dc;
+  --color-accent: #e8590c;
+  --color-accent-2: #ff7a1a;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   font-family: var(--font-sans);
-  background-color: #f8fafc;
-  color: #0f172a;
+  background-color: var(--color-surface);
+  color: var(--color-ink);
   overflow-x: hidden;
 }
 
-/* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
 }
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: var(--color-surface);
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
+  background: var(--color-shadow-dark);
+  border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: var(--color-accent);
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+::selection {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+/* ---- Neumorphic surface system ---- */
+/* Every raised/inset element shares the surface color; only the dual
+   shadow (light source top-left, shadow bottom-right) implies depth. */
+
+.neu-raised {
+  background: var(--color-surface);
+  box-shadow: 8px 8px 18px var(--color-shadow-dark), -8px -8px 18px var(--color-shadow-light);
+}
+
+.neu-raised-sm {
+  background: var(--color-surface);
+  box-shadow: 4px 4px 10px var(--color-shadow-dark), -4px -4px 10px var(--color-shadow-light);
+}
+
+.neu-inset {
+  background: var(--color-surface);
+  box-shadow: inset 5px 5px 11px var(--color-shadow-dark), inset -5px -5px 11px var(--color-shadow-light);
+}
+
+.neu-inset-sm {
+  background: var(--color-surface);
+  box-shadow: inset 3px 3px 6px var(--color-shadow-dark), inset -3px -3px 6px var(--color-shadow-light);
+}
+
+/* Tactile press feedback — the signature microinteraction: raised
+   surfaces invert to inset on press, like a real physical control. */
+.neu-pressable {
+  transition: box-shadow 0.2s cubic-bezier(0.22, 1, 0.36, 1), transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.neu-pressable:hover {
+  box-shadow: 10px 10px 22px var(--color-shadow-dark), -10px -10px 22px var(--color-shadow-light);
+}
+.neu-pressable:active {
+  box-shadow: inset 4px 4px 9px var(--color-shadow-dark), inset -4px -4px 9px var(--color-shadow-light);
+  transform: translateY(1px) scale(0.99);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .neu-pressable {
+    transition: none;
+  }
 }

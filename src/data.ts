@@ -2,7 +2,7 @@ import { PortfolioData } from './types';
 
 export const DEFAULT_PORTFOLIO_DATA: PortfolioData = {
   profile: {
-    name: "Sérgio Riman Dias",
+    name: "Sergio Riman Dias",
     title: "UX/UI Designer Sênior & Product Owner",
     bio: "UX/UI Designer Sênior com mais de 8 anos de experiência em concepção, pesquisa, prototipação e implementação de produtos digitais centrados no usuário. Especialista em liderança de squads multidisciplinares, construção de Design Systems escaláveis e condução de pesquisas qualitativas/quantitativas, alinhando de forma precisa a experiência de uso aos objetivos estratégicos de negócio.",
     location: "São Paulo, Brasil (Híbrido / Remoto)",
