@@ -1,0 +1,8 @@
+{
+  "name": "Portfólio Profissional",
+  "description": "Um portfólio profissional moderno e totalmente personalizável para designers e desenvolvedores apresentarem seus projetos do Figma e redes sociais.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
