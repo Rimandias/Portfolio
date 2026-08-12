@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   motion,
   AnimatePresence
@@ -8,18 +8,19 @@ import {
   Linkedin,
   Instagram,
   Mail,
-  ArrowUpRight,
+  ExternalLink,
   MapPin,
+  Briefcase,
+  Code,
+  Palette,
+  Globe,
+  MessageSquare,
+  GraduationCap,
   Menu,
   X
 } from 'lucide-react';
 import { Project, PortfolioData } from './types';
 import { DEFAULT_PORTFOLIO_DATA } from './data';
-
-// Solid, editorial swatches — no gradients, no SaaS purple/blue.
-const PROJECT_TONES = ['#b6491f', '#4b5d46', '#8a6a3f', '#5c4a3a'];
-
-const EASE = [0.22, 1, 0.36, 1] as const;
 
 export default function App() {
   // Always load latest data with updated links, projects and light styling
@@ -51,7 +52,6 @@ export default function App() {
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<string>('hero-section');
-  const cursorRef = useRef<HTMLDivElement>(null);
 
   const navLinks = [
     { id: 'projetos', label: 'Projetos' },
@@ -81,37 +81,18 @@ export default function App() {
     return () => observer.disconnect();
   }, []);
 
-  // Subtle trailing cursor accent — desktop/fine-pointer only, never replaces the system cursor
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia('(pointer: fine)').matches) return;
-    const el = cursorRef.current;
-    if (!el) return;
-
-    const handleMove = (e: MouseEvent) => {
-      el.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0)`;
-    };
-    const handleOver = (e: MouseEvent) => {
-      const target = (e.target as HTMLElement)?.closest?.('a, button');
-      el.classList.toggle('is-active-link', !!target);
-    };
-
-    window.addEventListener('mousemove', handleMove);
-    window.addEventListener('mouseover', handleOver);
-    return () => {
-      window.removeEventListener('mousemove', handleMove);
-      window.removeEventListener('mouseover', handleOver);
-    };
-  }, []);
-
-  const renderAvatar = (name: string, sizeClass = "w-16 h-16 text-lg") => {
+  // Render avatar as a raised circular badge with stylized initials
+  const renderAvatar = (name: string, sizeClass = "w-16 h-16 text-xl") => {
     if (portfolio.profile.avatarUrl) {
       return (
-        <img
-          src={portfolio.profile.avatarUrl}
-          alt={name}
-          className={`${sizeClass} object-cover border border-line grayscale-[15%]`}
-          referrerPolicy="no-referrer"
-        />
+        <div className={`${sizeClass} neu-raised-sm rounded-full p-1`}>
+          <img
+            src={portfolio.profile.avatarUrl}
+            alt={name}
+            className="w-full h-full rounded-full object-cover"
+            referrerPolicy="no-referrer"
+          />
+        </div>
       );
     }
 
@@ -123,59 +104,72 @@ export default function App() {
       .toUpperCase();
 
     return (
-      <div className={`${sizeClass} bg-ink flex items-center justify-center font-mono font-semibold text-paper`}>
+      <div className={`${sizeClass} neu-raised rounded-full flex items-center justify-center font-display font-bold text-accent-dark`}>
         <span className="tracking-wider">{initials}</span>
       </div>
     );
   };
 
   const featuredProject = portfolio.projects.find(p => p.id === 'proj-portal-rebranding') || portfolio.projects[0];
-  const featuredIndex = portfolio.projects.findIndex(p => p.id === featuredProject.id);
 
   const designSkills = portfolio.profile.skills.filter(s => s.category === "Design");
   const productSkills = portfolio.profile.skills.filter(s => s.category !== "Design");
   const averageLevel = (skills: typeof portfolio.profile.skills) =>
     skills.length ? Math.round(skills.reduce((sum, s) => sum + s.level, 0) / skills.length) : 0;
 
-  const bioFirstChar = portfolio.profile.bio.charAt(0);
-  const bioRest = portfolio.profile.bio.slice(1);
-
-  const contactRows = [
-    { label: 'E-mail', value: 'sergioriman@gmail.com', href: 'mailto:sergioriman@gmail.com', external: false },
-    { label: 'WhatsApp', value: '(11) 95329-3094', href: 'https://wa.me/5511953293094', external: true },
-    { label: 'LinkedIn', value: 'Sérgio Riman Dias', href: portfolio.socials.linkedin || '#', external: true },
-    { label: 'Behance', value: 'sergiodias5', href: portfolio.socials.behance || '#', external: true },
-  ];
+  // The signature element: a physical dial/slider gauge instead of a flat progress bar
+  const renderGauge = (skill: { name: string; level: number }, key: number) => (
+    <div key={key} className="space-y-2">
+      <div className="flex justify-between items-center text-xs">
+        <span className="text-ink font-medium">{skill.name}</span>
+        <span className="text-accent-dark font-mono font-bold">{skill.level}%</span>
+      </div>
+      <div className="relative h-3 w-full neu-inset rounded-full">
+        <motion.div
+          initial={{ width: 0 }}
+          whileInView={{ width: `${skill.level}%` }}
+          viewport={{ once: true }}
+          transition={{ duration: 1, ease: "easeOut" }}
+          className="absolute left-0 top-0 h-full rounded-full"
+          style={{ background: 'linear-gradient(90deg, var(--color-accent-2), var(--color-accent))' }}
+        />
+        <div
+          className="absolute top-1/2 w-4 h-4 neu-raised-sm rounded-full border border-white/40"
+          style={{ left: `${skill.level}%`, transform: 'translate(-50%, -50%)' }}
+        />
+      </div>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-paper text-ink font-sans selection:bg-accent selection:text-paper relative pb-20">
-      <div ref={cursorRef} className="trail-cursor hidden md:block" aria-hidden="true" />
-      <div className="grain-overlay" aria-hidden="true" />
+    <div className="min-h-screen bg-surface text-ink font-sans selection:bg-accent selection:text-white relative pb-16">
 
       {/* Primary Header/Navbar */}
-      <header id="main-header" className="sticky top-0 z-40 bg-paper/85 backdrop-blur-md border-b border-line px-4 md:px-8 py-4">
+      <header id="main-header" className="sticky top-0 z-40 bg-surface/95 backdrop-blur-md px-4 md:px-8 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <motion.a
-            href="#hero-section"
-            initial={{ opacity: 0, x: -12 }}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, ease: EASE }}
             className="flex items-center gap-2.5"
           >
-            <div className="w-2 h-2 bg-accent" />
-            <span className="text-[11px] font-mono font-semibold uppercase tracking-[0.2em] text-ink">
-              Sérgio Riman Dias <span className="text-muted">/</span> Portfólio
-            </span>
-          </motion.a>
+            <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'linear-gradient(135deg, var(--color-accent-2), var(--color-accent))' }} />
+            <div>
+              <span className="text-xs font-display font-bold uppercase tracking-[0.25em] text-ink">
+                {portfolio.profile.name} <span className="text-muted">/</span> Portfolio
+              </span>
+            </div>
+          </motion.div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-9 text-[11px] font-mono uppercase tracking-[0.15em] text-ink-soft">
+          <nav className="hidden md:flex items-center gap-1 text-[11px] uppercase tracking-widest font-bold text-muted neu-inset rounded-full p-1.5">
             {navLinks.map(link => (
               <a
                 key={link.id}
                 href={`#${link.id}`}
-                className={`ink-link transition-colors duration-300 ${
-                  activeSection === link.id ? 'text-accent-dark' : 'hover:text-accent-dark'
+                className={`px-4 py-2 rounded-full transition-all duration-300 ${
+                  activeSection === link.id
+                    ? 'neu-raised-sm text-accent-dark'
+                    : 'text-muted hover:text-ink'
                 }`}
               >
                 {link.label}
@@ -187,7 +181,7 @@ export default function App() {
           <div className="flex items-center gap-3">
             <a
               href="#contato"
-              className="hidden md:flex items-center gap-2 px-4 py-2 text-[11px] font-mono font-semibold uppercase tracking-[0.1em] bg-ink hover:bg-accent-dark text-paper transition-colors duration-500"
+              className="neu-raised neu-pressable hidden md:flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-display font-bold tracking-wide text-accent-dark"
             >
               <span>Contato</span>
             </a>
@@ -197,7 +191,7 @@ export default function App() {
               aria-expanded={isMenuOpen}
               aria-controls="mobile-nav-menu"
               aria-label={isMenuOpen ? 'Fechar menu' : 'Abrir menu'}
-              className="md:hidden flex items-center justify-center w-10 h-10 border border-line text-ink hover:border-accent hover:text-accent transition-colors"
+              className="neu-raised neu-pressable md:hidden flex items-center justify-center w-10 h-10 rounded-2xl text-ink"
             >
               {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -212,17 +206,19 @@ export default function App() {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3, ease: EASE }}
+              transition={{ duration: 0.2, ease: 'easeInOut' }}
               className="md:hidden overflow-hidden"
             >
-              <div className="max-w-6xl mx-auto flex flex-col pt-4 text-sm font-mono uppercase tracking-wide">
+              <div className="max-w-6xl mx-auto flex flex-col gap-2 pt-4 text-sm font-semibold text-muted">
                 {navLinks.map(link => (
                   <a
                     key={link.id}
                     href={`#${link.id}`}
                     onClick={() => setIsMenuOpen(false)}
-                    className={`px-1 py-3 border-t border-line transition-colors ${
-                      activeSection === link.id ? 'text-accent-dark' : 'text-ink-soft hover:text-accent-dark'
+                    className={`px-4 py-2.5 rounded-2xl transition-colors ${
+                      activeSection === link.id
+                        ? 'neu-inset text-accent-dark'
+                        : 'text-muted hover:text-ink'
                     }`}
                   >
                     {link.label}
@@ -235,241 +231,313 @@ export default function App() {
       </header>
 
       {/* Main content */}
-      <motion.main
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, ease: EASE }}
-        className="max-w-6xl mx-auto px-4 md:px-8 mt-14 md:mt-20"
-      >
+      <main className="max-w-6xl mx-auto px-4 md:px-8 mt-8 md:mt-12">
 
         {/* ======================================================== */}
-        {/* MASTHEAD / HERO — asymmetric editorial layout */}
+        {/* BENTO GRID HERO SECTION */}
         {/* ======================================================== */}
-        <section id="hero-section" className="mb-24 md:mb-32">
-          <div className="border-t-2 border-ink pt-4 mb-8 flex items-center justify-between">
-            <span className="text-[11px] font-mono uppercase tracking-[0.25em] text-accent-dark">{portfolio.profile.title}</span>
-            <span className="hidden sm:inline text-[11px] font-mono uppercase tracking-[0.25em] text-muted">{portfolio.profile.location.split(',')[0]}</span>
-          </div>
+        <section id="hero-section" className="mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
 
-          <h1 className="font-serif italic font-medium text-ink leading-[0.92] mb-14 md:mb-20">
-            <span className="block text-[clamp(2.75rem,9vw,6.5rem)]">{portfolio.profile.name.split(' ')[0]}</span>
-            <span className="block text-[clamp(2.75rem,9vw,6.5rem)] pl-[10vw] md:pl-[14vw]">
-              {portfolio.profile.name.split(' ').slice(1).join(' ')}.
-            </span>
-          </h1>
-
-          {/* Row A — bio (wide) + marginalia (offset, narrow) */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-x-8 gap-y-10 mb-16 md:mb-24">
-            <div className="md:col-span-7">
-              <span className="block text-[11px] font-mono uppercase tracking-[0.2em] text-muted mb-4">Sobre</span>
-              <p className="text-ink-soft text-base md:text-lg leading-relaxed max-w-[540px]">
-                <span className="font-serif italic text-accent text-4xl leading-none float-left mr-2 mt-1">{bioFirstChar}</span>
-                {bioRest}
-              </p>
+            {/* Intro Card (Col Span 2, Row Span 2) */}
+            <div className="col-span-1 md:col-span-2 md:row-span-2 neu-raised rounded-[40px] p-8 md:p-10 flex flex-col justify-between min-h-[440px]">
+              <div className="flex justify-between items-start">
+                <div className="w-14 h-14 neu-inset rounded-2xl flex items-center justify-center">
+                  <Figma className="w-7 h-7 text-accent-dark" />
+                </div>
+                <div>
+                  {renderAvatar(portfolio.profile.name, "w-16 h-16 text-xl")}
+                </div>
+              </div>
 
               <div className="mt-8">
-                <span className="block text-[11px] font-mono uppercase tracking-[0.2em] text-muted mb-3">Stack & Foco</span>
-                <div className="flex flex-wrap gap-2">
-                  {portfolio.profile.skills.slice(0, 6).map((sk, idx) => (
-                    <span key={idx} className="border border-line px-2.5 py-1 text-[10px] font-mono uppercase tracking-tight text-ink-soft">
+                <div className="mb-4">
+                  <span className="text-xs font-bold uppercase tracking-widest text-accent-dark neu-inset-sm px-3.5 py-1.5 rounded-full inline-block">
+                    {portfolio.profile.title}
+                  </span>
+                </div>
+
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold tracking-tight leading-[0.95] mb-4 text-ink">
+                  {portfolio.profile.name.split(' ')[0]}<br/>
+                  {portfolio.profile.name.split(' ').slice(1).join(' ')}.
+                </h1>
+
+                <p className="text-muted text-sm md:text-base leading-relaxed max-w-[440px]">
+                  {portfolio.profile.bio}
+                </p>
+              </div>
+            </div>
+
+            {/* Location Card — the "digital screen" (Col Span 1, Row Span 2) */}
+            <div className="col-span-1 md:row-span-2 neu-screen text-white rounded-[40px] min-h-[340px] flex flex-col justify-between p-8">
+              <div>
+                <span className="text-[10px] uppercase tracking-widest text-white/50 font-mono">Disponibilidade Remota</span>
+                <p className="text-white/70 text-xs font-medium mt-1">Atuação Global & Squads Ágeis</p>
+              </div>
+
+              <div>
+                <div className="text-[10px] uppercase tracking-widest text-white/50 mb-1 font-mono">Localização</div>
+                <div className="text-base font-medium text-accent-light flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-accent-light shrink-0" />
+                  {portfolio.profile.location}
+                </div>
+              </div>
+            </div>
+
+            {/* Figma Profile Link (Col Span 1, Row Span 1) */}
+            {portfolio.socials.figma && (
+              <a
+                href={portfolio.socials.figma}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="neu-raised neu-pressable col-span-1 rounded-[40px] p-8 flex flex-col justify-between min-h-[190px]"
+              >
+                <div className="w-12 h-12 neu-inset rounded-2xl flex items-center justify-center">
+                  <svg className="w-7 h-7 text-accent-dark" fill="currentColor" viewBox="0 0 38 57">
+                    <path d="M19 28.5c0 5.247-4.253 9.5-9.5 9.5S0 33.747 0 28.5 4.253 19 9.5 19s9.5 4.253 9.5 9.5z"/>
+                    <path d="M19 9.5C19 14.747 14.747 19 9.5 19S0 14.747 0 9.5 4.253 0 9.5 0 19 4.253 19 9.5z"/>
+                    <path d="M38 9.5C38 14.747 33.747 19 28.5 19S19 14.747 19 9.5 23.253 0 28.5 0 38 4.253 38 9.5z"/>
+                    <path d="M38 28.5c0 5.247-4.253 9.5-9.5 9.5S19 33.747 19 28.5 23.253 19 28.5 19s9.5 4.253 9.5 9.5z"/>
+                    <path d="M19 47.5c0 5.247-4.253 9.5-9.5 9.5S0 52.747 0 47.5 4.253 38 9.5 38 19 42.253 19 47.5z"/>
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-base font-bold text-ink flex items-center gap-1.5">
+                    Portal de Assinatura <ExternalLink className="w-4 h-4 opacity-50" />
+                  </div>
+                  <div className="text-[10px] text-muted uppercase tracking-[0.2em] font-bold mt-1">Acessar no Figma</div>
+                </div>
+              </a>
+            )}
+
+            {/* Socials Grid (Col Span 1, Row Span 1) */}
+            <div className="col-span-1 neu-raised rounded-[40px] p-8 flex flex-col justify-between min-h-[190px]">
+              <div className="flex justify-between items-start">
+                <div className="w-10 h-10 neu-inset rounded-2xl flex items-center justify-center text-accent-dark">
+                  <Linkedin className="w-5 h-5" />
+                </div>
+                <div className="flex gap-1.5">
+                  {portfolio.socials.behance && (
+                    <a
+                      href={portfolio.socials.behance}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="neu-raised-sm neu-pressable h-8 px-2.5 rounded-full flex items-center justify-center text-accent-dark text-[11px] font-bold font-mono"
+                      title="Behance"
+                    >
+                      Bē
+                    </a>
+                  )}
+                  {portfolio.socials.instagram && (
+                    <a
+                      href={portfolio.socials.instagram}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="neu-raised-sm neu-pressable w-8 h-8 rounded-full flex items-center justify-center text-muted"
+                      title="Instagram"
+                    >
+                      <Instagram className="w-4 h-4" />
+                    </a>
+                  )}
+                </div>
+              </div>
+              <div>
+                <div className="text-base font-bold text-ink">Socials & Portfólios</div>
+                <div className="flex flex-wrap gap-2.5 mt-2">
+                  {portfolio.socials.linkedin && (
+                    <a href={portfolio.socials.linkedin} target="_blank" rel="noopener noreferrer" className="text-[10px] font-mono font-bold uppercase tracking-wider text-accent-dark hover:underline">
+                      LinkedIn
+                    </a>
+                  )}
+                  {portfolio.socials.behance && (
+                    <a href={portfolio.socials.behance} target="_blank" rel="noopener noreferrer" className="text-[10px] font-mono font-bold uppercase tracking-wider text-accent-dark hover:underline">
+                      Behance
+                    </a>
+                  )}
+                  {portfolio.socials.email && (
+                    <a href={`mailto:${portfolio.socials.email}`} className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted hover:underline">
+                      E-mail
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Featured Project Showcase — second "screen" (Col Span 2, Row Span 1) */}
+            <div className="col-span-1 md:col-span-2 neu-screen rounded-[40px] p-8 flex flex-col md:flex-row items-center gap-6 min-h-[190px] text-white">
+              <div className="text-left">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-accent-light border border-accent-light/40 px-3 py-1 rounded-full mb-3 inline-block">Destaque Principal</span>
+                <h3 className="text-2xl md:text-3xl font-display font-bold mb-1.5 text-white leading-tight">{featuredProject.title}</h3>
+                <p className="text-white/60 text-xs md:text-sm max-w-[340px] line-clamp-2">{featuredProject.description}</p>
+              </div>
+              <div className="md:ml-auto shrink-0 flex gap-2">
+                {featuredProject.figmaUrl && (
+                  <a
+                    href={featuredProject.figmaUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="neu-raised neu-pressable w-14 h-14 rounded-2xl flex items-center justify-center text-accent-dark shrink-0"
+                    title={featuredProject.figmaUrl.includes('figma.com') ? "Abrir no Figma" : "Acessar Projeto no Ar"}
+                  >
+                    {featuredProject.figmaUrl.includes('figma.com') ? <Figma className="w-6 h-6" /> : <Globe className="w-6 h-6" />}
+                  </a>
+                )}
+                {featuredProject.liveUrl && featuredProject.liveUrl !== featuredProject.figmaUrl && (
+                  <a
+                    href={featuredProject.liveUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 text-accent-light"
+                    style={{ boxShadow: 'inset 3px 3px 7px rgba(0,0,0,0.5), inset -2px -2px 5px rgba(255,255,255,0.04)' }}
+                    title="Acessar Projeto no Ar"
+                  >
+                    <ExternalLink className="w-5 h-5" />
+                  </a>
+                )}
+              </div>
+            </div>
+
+            {/* Status Card (Col Span 1, Row Span 1) */}
+            <div className="col-span-1 neu-raised rounded-[40px] p-8 flex flex-col items-center justify-center text-center min-h-[190px]">
+               <div className="w-10 h-10 relative flex items-center justify-center mb-3">
+                  <div className="absolute inset-0 rounded-full animate-ping opacity-20" style={{ background: 'var(--color-accent)' }} />
+                  <div className="w-3.5 h-3.5 rounded-full" style={{ background: 'linear-gradient(135deg, var(--color-accent-2), var(--color-accent))' }} />
+               </div>
+               <div className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted">Disponibilidade</div>
+               <div className="text-sm font-semibold text-ink mt-1">{portfolio.profile.status}</div>
+            </div>
+
+            {/* Tech Stack expertise (Col Span 1, Row Span 1) */}
+            <div className="col-span-1 neu-raised rounded-[40px] p-8 flex flex-col justify-between min-h-[190px]">
+               <div className="flex flex-wrap gap-1.5">
+                  {portfolio.profile.skills.slice(0, 4).map((sk, idx) => (
+                    <div key={idx} className="neu-inset-sm text-[9px] px-2.5 py-1 rounded-full uppercase tracking-tight text-muted font-medium">
                       {sk.name}
-                    </span>
+                    </div>
                   ))}
-                </div>
-              </div>
+               </div>
+               <div className="text-muted font-bold text-[10px] uppercase tracking-widest">
+                  Expertise & Squads
+               </div>
             </div>
 
-            <div className="md:col-span-4 md:col-start-9 md:mt-10">
-              <div className="flex items-start justify-between border-t-2 border-accent pt-4 mb-5">
-                {renderAvatar(portfolio.profile.name, "w-14 h-14 text-base")}
-                <div className="flex items-center gap-1.5 mt-1">
-                  <div className="w-2 h-2 rounded-full bg-emerald-700" />
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-muted">Disponível</span>
-                </div>
-              </div>
-
-              <dl className="space-y-4 text-sm">
-                <div className="border-t border-line pt-3">
-                  <dt className="text-[10px] font-mono uppercase tracking-widest text-muted mb-1">Localização</dt>
-                  <dd className="flex items-center gap-1.5 text-ink font-medium">
-                    <MapPin className="w-3.5 h-3.5 text-accent shrink-0" />
-                    {portfolio.profile.location}
-                  </dd>
-                </div>
-                <div className="border-t border-line pt-3">
-                  <dt className="text-[10px] font-mono uppercase tracking-widest text-muted mb-1">Disponibilidade</dt>
-                  <dd className="text-ink font-medium">{portfolio.profile.status}</dd>
-                </div>
-              </dl>
-            </div>
-          </div>
-
-          {/* Row B — featured project (wide, negative panel) + socials (offset upward) */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-x-8 gap-y-10 items-start">
-            <div className="md:col-span-7 bg-negative text-negative-text p-8 md:p-10 relative overflow-hidden">
-              <span className="absolute -right-2 -top-6 font-serif italic text-[9rem] leading-none text-white/[0.05] select-none pointer-events-none">
-                0{featuredIndex >= 0 ? featuredIndex + 1 : 1}
-              </span>
-              <div className="relative z-10">
-                <span className="inline-block text-[10px] font-mono uppercase tracking-[0.2em] border border-accent-light text-accent-light px-2.5 py-1 mb-5">
-                  Em destaque
-                </span>
-                <h3 className="font-serif text-2xl md:text-3xl text-negative-text leading-tight mb-3">{featuredProject.title}</h3>
-                <p className="text-white/60 text-sm max-w-[420px] leading-relaxed mb-6">{featuredProject.description}</p>
-                <div className="flex flex-wrap gap-x-6 gap-y-2">
-                  {featuredProject.figmaUrl && (
-                    <a
-                      href={featuredProject.figmaUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="ink-link inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-widest text-negative-text hover:text-accent-light transition-colors duration-300"
-                    >
-                      {featuredProject.figmaUrl.includes('figma.com') ? 'Ver no Figma' : 'Acessar projeto'}
-                      <ArrowUpRight className="w-3.5 h-3.5" />
-                    </a>
-                  )}
-                  {featuredProject.liveUrl && featuredProject.liveUrl !== featuredProject.figmaUrl && (
-                    <a
-                      href={featuredProject.liveUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="ink-link inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-widest text-negative-text hover:text-accent-light transition-colors duration-300"
-                    >
-                      Projeto no ar
-                      <ArrowUpRight className="w-3.5 h-3.5" />
-                    </a>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="md:col-span-4 md:col-start-9 md:-mt-6">
-              <span className="block text-[11px] font-mono uppercase tracking-[0.2em] text-muted mb-3">Social</span>
-              <div className="border-t border-line">
-                {portfolio.socials.figma && (
-                  <a href={portfolio.socials.figma} target="_blank" rel="noopener noreferrer" className="ink-link group flex items-center justify-between py-3 border-b border-line text-sm text-ink-soft hover:text-accent-dark transition-colors">
-                    <span className="flex items-center gap-2"><Figma className="w-3.5 h-3.5" /> Figma</span>
-                    <ArrowUpRight className="w-3.5 h-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
-                  </a>
-                )}
-                {portfolio.socials.linkedin && (
-                  <a href={portfolio.socials.linkedin} target="_blank" rel="noopener noreferrer" className="ink-link group flex items-center justify-between py-3 border-b border-line text-sm text-ink-soft hover:text-accent-dark transition-colors">
-                    <span className="flex items-center gap-2"><Linkedin className="w-3.5 h-3.5" /> LinkedIn</span>
-                    <ArrowUpRight className="w-3.5 h-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
-                  </a>
-                )}
-                {portfolio.socials.behance && (
-                  <a href={portfolio.socials.behance} target="_blank" rel="noopener noreferrer" className="ink-link group flex items-center justify-between py-3 border-b border-line text-sm text-ink-soft hover:text-accent-dark transition-colors">
-                    <span className="flex items-center gap-2 font-mono text-xs font-bold">Bē Behance</span>
-                    <ArrowUpRight className="w-3.5 h-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
-                  </a>
-                )}
-                {portfolio.socials.instagram && (
-                  <a href={portfolio.socials.instagram} target="_blank" rel="noopener noreferrer" className="ink-link group flex items-center justify-between py-3 border-b border-line text-sm text-ink-soft hover:text-accent-dark transition-colors">
-                    <span className="flex items-center gap-2"><Instagram className="w-3.5 h-3.5" /> Instagram</span>
-                    <ArrowUpRight className="w-3.5 h-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
-                  </a>
-                )}
-                {portfolio.socials.email && (
-                  <a href={`mailto:${portfolio.socials.email}`} className="ink-link group flex items-center justify-between py-3 border-b border-line text-sm text-ink-soft hover:text-accent-dark transition-colors">
-                    <span className="flex items-center gap-2"><Mail className="w-3.5 h-3.5" /> E-mail</span>
-                    <ArrowUpRight className="w-3.5 h-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
-                  </a>
-                )}
-              </div>
-            </div>
           </div>
         </section>
 
         {/* ======================================================== */}
-        {/* PROJECTS — index list, not a symmetric card grid */}
+        {/* 3. FIGMA & WEB PROJECTS SECTION */}
         {/* ======================================================== */}
-        <section id="projetos" className="mb-24 md:mb-32 scroll-mt-24">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4 border-t-2 border-ink pt-4">
+        <section id="projetos" className="mb-16 scroll-mt-24">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
             <div>
-              <span className="block text-[11px] font-mono uppercase tracking-[0.2em] text-accent-dark mb-2">
-                Trabalho — seleção {String(1).padStart(2, '0')}/{String(portfolio.projects.length).padStart(2, '0')}
-              </span>
-              <h3 className="font-serif italic text-3xl md:text-4xl text-ink">
-                Projetos que saíram do papel.
+              <div className="flex items-center gap-2 mb-1.5">
+                <Globe className="w-4 h-4 text-accent-dark" />
+                <span className="text-xs font-mono font-bold uppercase tracking-widest text-accent-dark">Showcase de Produtos</span>
+              </div>
+              <h3 className="font-display font-extrabold text-2xl md:text-3xl text-ink tracking-tight">
+                Projetos & Aplicações em Destaque
               </h3>
+              <p className="text-sm text-muted mt-1">Concepção de UX/UI, prototipação de alta fidelidade e aplicações web no ar.</p>
             </div>
-            <p className="text-sm text-muted max-w-[300px]">UX, prototipação e produto no ar — não é mockup, é link.</p>
           </div>
 
-          <div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
             {portfolio.projects.map((proj, idx) => (
               <motion.div
                 key={proj.id}
                 id={`project-card-${proj.id}`}
-                initial={{ opacity: 0, y: 16 }}
+                initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-80px' }}
-                transition={{ duration: 0.6, delay: idx * 0.06, ease: EASE }}
-                className="group grid grid-cols-1 md:grid-cols-12 gap-6 items-start py-9 border-b border-line hover:bg-paper-alt/40 transition-colors duration-500"
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.08 }}
+                whileHover={{ y: -4 }}
+                className="neu-raised rounded-[32px] overflow-hidden flex flex-col group"
               >
-                <div className="md:col-span-1 flex md:block items-center gap-3">
-                  <span className="font-mono text-3xl md:text-4xl text-line-strong group-hover:text-accent transition-colors duration-500">
+                {/* Neutral inset "screen" preview — no per-project color, just index + accent LED */}
+                <div className="h-44 neu-inset m-4 mb-0 rounded-[24px] relative overflow-hidden flex items-center justify-center p-6">
+                  <div className="relative z-10 w-full max-w-[280px] neu-raised-sm bg-surface rounded-2xl p-4 flex flex-col justify-between group-hover:scale-105 transition-transform duration-300">
+                    <div className="flex justify-between items-center mb-3">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2.5 h-2.5 rounded-full" style={{ background: 'linear-gradient(135deg, var(--color-accent-2), var(--color-accent))' }} />
+                        <span className="text-[10px] font-bold text-ink">{proj.title}</span>
+                      </div>
+                      <div className="flex gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-shadow-dark" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-shadow-dark" />
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <div className="w-full h-1.5 rounded neu-inset-sm" />
+                      <div className="w-3/4 h-1.5 rounded neu-inset-sm" />
+                    </div>
+                  </div>
+                  <span className="absolute bottom-3 right-4 font-mono text-3xl font-bold text-shadow-dark">
                     {String(idx + 1).padStart(2, '0')}
                   </span>
                 </div>
 
-                <div className="md:col-span-3">
-                  <div
-                    className="h-24 md:h-28 relative flex items-center justify-center"
-                    style={{ backgroundColor: PROJECT_TONES[idx % PROJECT_TONES.length] }}
-                  >
-                    <span className="absolute top-2 left-2 w-2.5 h-2.5 border-t border-l border-white/50" />
-                    <span className="absolute bottom-2 right-2 w-2.5 h-2.5 border-b border-r border-white/50" />
+                {/* Body Info */}
+                <div className="p-7 flex-1 flex flex-col justify-between">
+                  <div className="space-y-3">
+                    <h4 className="font-display font-bold text-xl text-ink leading-tight">
+                      {proj.title}
+                    </h4>
+                    <p className="text-xs text-muted leading-relaxed line-clamp-3">
+                      {proj.description}
+                    </p>
+
+                    {/* Project Tags */}
+                    {proj.tags && proj.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {proj.tags.map((tag, tagIdx) => (
+                          <span
+                            key={tagIdx}
+                            className="neu-inset-sm text-muted text-[10px] px-2.5 py-0.5 rounded-lg font-mono font-medium"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                </div>
 
-                <div className="md:col-span-5">
-                  <h4 className="font-serif text-xl md:text-2xl text-ink group-hover:text-accent transition-colors duration-500 leading-tight mb-2">
-                    {proj.title}
-                  </h4>
-                  <p className="text-sm text-ink-soft leading-relaxed max-w-md mb-3">
-                    {proj.description}
-                  </p>
-                  {proj.tags && proj.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5">
-                      {proj.tags.map((tag, tagIdx) => (
-                        <span
-                          key={tagIdx}
-                          className="text-[10px] font-mono uppercase tracking-tight text-muted border border-line px-2 py-0.5"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                  {/* Footer Buttons */}
+                  <div className="flex items-center gap-3 mt-6 pt-4">
+                    {proj.figmaUrl && (
+                      <a
+                        id={`btn-figma-${proj.id}`}
+                        href={proj.figmaUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="neu-raised-sm neu-pressable flex-1 text-accent-dark py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2"
+                      >
+                        {proj.figmaUrl.includes('figma.com') ? (
+                          <>
+                            <Figma className="w-3.5 h-3.5" />
+                            <span>Abrir no Figma</span>
+                          </>
+                        ) : (
+                          <>
+                            <Globe className="w-3.5 h-3.5" />
+                            <span>Acessar Projeto</span>
+                          </>
+                        )}
+                      </a>
+                    )}
 
-                <div className="md:col-span-3 flex md:flex-col gap-4 md:gap-2 md:items-end">
-                  {proj.figmaUrl && (
-                    <a
-                      id={`btn-figma-${proj.id}`}
-                      href={proj.figmaUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="ink-link inline-flex items-center gap-1 text-[11px] font-mono uppercase tracking-widest text-ink-soft hover:text-accent-dark transition-colors"
-                    >
-                      {proj.figmaUrl.includes('figma.com') ? 'Figma' : 'Acessar'}
-                      <ArrowUpRight className="w-3 h-3" />
-                    </a>
-                  )}
-                  {proj.liveUrl && proj.liveUrl !== proj.figmaUrl && (
-                    <a
-                      id={`btn-live-${proj.id}`}
-                      href={proj.liveUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="ink-link inline-flex items-center gap-1 text-[11px] font-mono uppercase tracking-widest text-ink-soft hover:text-accent-dark transition-colors"
-                    >
-                      No ar
-                      <ArrowUpRight className="w-3 h-3" />
-                    </a>
-                  )}
+                    {proj.liveUrl && proj.liveUrl !== proj.figmaUrl && (
+                      <a
+                        id={`btn-live-${proj.id}`}
+                        href={proj.liveUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Ver Aplicação / Protótipo Online"
+                        className="neu-raised-sm neu-pressable p-2.5 text-muted rounded-xl flex items-center justify-center"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    )}
+                  </div>
                 </div>
               </motion.div>
             ))}
@@ -477,157 +545,191 @@ export default function App() {
         </section>
 
         {/* ======================================================== */}
-        {/* SKILLS — dry ledger, not a dashboard */}
+        {/* 4. SKILLS SECTION — physical gauges (signature element) */}
         {/* ======================================================== */}
-        <section id="habilidades" className="mb-24 md:mb-32 scroll-mt-24">
-          <div className="border-t-2 border-ink pt-4 mb-12">
-            <span className="block text-[11px] font-mono uppercase tracking-[0.2em] text-accent-dark mb-2">Competências — leitura rápida</span>
-            <h3 className="font-serif italic text-3xl md:text-4xl text-ink mb-2">Onde eu sou forte, de verdade.</h3>
-            <p className="text-sm text-muted max-w-[460px]">Design de produto e liderança, lado a lado — sem inflar número.</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2">
-            <div className="md:pr-12 md:border-r border-line">
-              <h4 className="font-mono font-semibold text-xs uppercase tracking-widest text-ink flex items-center justify-between border-b border-ink pb-3 mb-5">
-                <span>Visual Design & UX/UI</span>
-                <span className="text-accent-dark">{averageLevel(designSkills)}%</span>
-              </h4>
-              <div className="space-y-4">
-                {designSkills.map((skill, index) => (
-                  <div key={index}>
-                    <div className="flex justify-between items-baseline text-xs mb-1.5">
-                      <span className="text-ink-soft font-medium">{skill.name}</span>
-                      <span className="text-muted font-mono">{skill.level}%</span>
-                    </div>
-                    <div className="h-[3px] w-full bg-line relative">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        whileInView={{ width: `${skill.level}%` }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.9, ease: EASE }}
-                        className="h-full bg-accent absolute left-0 top-0"
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
+        <section id="habilidades" className="mb-16 scroll-mt-24">
+          <div className="neu-raised p-8 md:p-10 rounded-[40px]">
+            <div className="mb-8">
+              <span className="text-xs font-mono font-bold uppercase tracking-widest text-accent-dark flex items-center gap-1.5 mb-1">
+                <Code className="w-3.5 h-3.5" />
+                Matriz de Competências
+              </span>
+              <h3 className="font-display font-extrabold text-2xl md:text-3xl text-ink">Habilidades & Especialidades</h3>
+              <p className="text-sm text-muted mt-1">Evolução técnica contínua combinando design visual com liderança de produto e métodos ágeis.</p>
             </div>
 
-            <div className="mt-12 md:mt-0 md:pl-12">
-              <h4 className="font-mono font-semibold text-xs uppercase tracking-widest text-ink flex items-center justify-between border-b border-ink pb-3 mb-5">
-                <span>Product Management</span>
-                <span className="text-accent-dark">{averageLevel(productSkills)}%</span>
-              </h4>
-              <div className="space-y-4">
-                {productSkills.map((skill, index) => (
-                  <div key={index}>
-                    <div className="flex justify-between items-baseline text-xs mb-1.5">
-                      <span className="text-ink-soft font-medium">{skill.name}</span>
-                      <span className="text-muted font-mono">{skill.level}%</span>
-                    </div>
-                    <div className="h-[3px] w-full bg-line relative">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        whileInView={{ width: `${skill.level}%` }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.9, ease: EASE }}
-                        className="h-full bg-ink absolute left-0 top-0"
-                      />
-                    </div>
-                  </div>
-                ))}
+            {/* Visual Skill Matrix Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+              {/* Design Core Skills */}
+              <div className="space-y-5">
+                <h4 className="font-display font-bold text-sm text-ink flex items-center gap-2 pb-2">
+                  <Palette className="w-4 h-4 text-accent-dark" />
+                  Visual Design & UX/UI ({averageLevel(designSkills)}%)
+                </h4>
+                <div className="space-y-4">
+                  {designSkills.map((skill, index) => renderGauge(skill, index))}
+                </div>
+              </div>
+
+              {/* Product Management */}
+              <div className="space-y-5">
+                <h4 className="font-display font-bold text-sm text-ink flex items-center gap-2 pb-2">
+                  <Briefcase className="w-4 h-4 text-accent-dark" />
+                  Product Management ({averageLevel(productSkills)}%)
+                </h4>
+                <div className="space-y-4">
+                  {productSkills.map((skill, index) => renderGauge(skill, index))}
+                </div>
               </div>
             </div>
           </div>
         </section>
 
         {/* ======================================================== */}
-        {/* EXPERIENCE — vertical rule timeline, not boxed cards */}
+        {/* 5. WORK EXPERIENCE TIMELINE */}
         {/* ======================================================== */}
-        <section id="experiencia" className="mb-24 md:mb-32 scroll-mt-24">
-          <div className="border-t-2 border-ink pt-4 mb-12">
-            <span className="block text-[11px] font-mono uppercase tracking-[0.2em] text-accent-dark mb-2">Trajetória — 8+ anos</span>
-            <h3 className="font-serif italic text-3xl md:text-4xl text-ink mb-2">Onde eu já coloquei a mão.</h3>
-            <p className="text-sm text-muted max-w-[460px]">Produto, UX e liderança de squads em cinco empresas diferentes.</p>
-          </div>
+        <section id="experiencia" className="mb-16 scroll-mt-24">
+          <div className="neu-raised p-8 md:p-10 rounded-[40px]">
+            <div className="mb-8">
+              <span className="text-xs font-mono font-bold uppercase tracking-widest text-accent-dark flex items-center gap-1.5 mb-1">
+                <Briefcase className="w-3.5 h-3.5" />
+                Carreira & Trajetória
+              </span>
+              <h3 className="font-display font-extrabold text-2xl md:text-3xl text-ink">Experiência Profissional</h3>
+              <p className="text-sm text-muted mt-1">Mais de 8 anos de atuação em liderança de produtos digitais, UX/UI e Design Systems.</p>
+            </div>
 
-          <div>
-            {portfolio.experiences.map((exp, idx) => (
-              <div
-                key={exp.id}
-                className={`grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-8 py-8 border-b border-line ${idx === 0 ? 'border-t-2 border-t-ink' : ''}`}
-              >
-                <div className="md:col-span-3">
-                  <span className="block text-xs font-mono text-muted mb-1">{exp.period}</span>
-                  <span className="block text-[11px] font-mono font-bold uppercase tracking-widest text-accent-dark">{exp.company}</span>
-                </div>
-                <div className="md:col-span-9">
-                  <h4 className="font-serif text-lg md:text-xl text-ink mb-3">{exp.role}</h4>
-                  <ul className="space-y-2 text-sm text-ink-soft leading-relaxed">
+            <div className="space-y-5">
+              {portfolio.experiences.map((exp) => (
+                <div
+                  key={exp.id}
+                  className="neu-inset p-6 rounded-[24px]"
+                >
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-3">
+                    <div>
+                      <h4 className="font-bold text-base text-ink">{exp.role}</h4>
+                      <div className="text-sm font-semibold text-accent-dark">{exp.company}</div>
+                    </div>
+                    <span className="text-xs font-mono font-medium text-muted neu-raised-sm px-3 py-1 rounded-full w-fit">
+                      {exp.period}
+                    </span>
+                  </div>
+
+                  <ul className="space-y-2 mt-3 text-xs text-muted leading-relaxed">
                     {exp.activities.map((act, actIdx) => (
-                      <li key={actIdx} className="flex items-start gap-2.5">
-                        <span className="text-accent mt-0.5 shrink-0">–</span>
+                      <li key={actIdx} className="flex items-start gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ background: 'linear-gradient(135deg, var(--color-accent-2), var(--color-accent))' }} />
                         <span>{act}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
 
-          {/* Education */}
-          <div className="mt-16">
-            <span className="block text-[11px] font-mono uppercase tracking-[0.2em] text-muted mb-5 border-t border-ink pt-4">Formação</span>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-              {portfolio.education.map((edu) => (
-                <div key={edu.id} className="flex items-baseline gap-4 border-b border-line pb-4">
-                  <span className="font-mono text-xs text-accent-dark shrink-0">{edu.year}</span>
-                  <div>
-                    <div className="font-serif text-base text-ink">{edu.degree}</div>
+            {/* Education Section */}
+            <div className="mt-10 pt-8">
+              <div className="flex items-center gap-2 mb-4">
+                <GraduationCap className="w-5 h-5 text-accent-dark" />
+                <h4 className="font-display font-bold text-lg text-ink">Formação Acadêmica</h4>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {portfolio.education.map((edu) => (
+                  <div key={edu.id} className="neu-inset p-5 rounded-[24px]">
+                    <span className="text-xs font-mono font-bold text-accent-dark">{edu.year}</span>
+                    <div className="font-bold text-ink text-sm mt-0.5">{edu.degree}</div>
                     <div className="text-xs text-muted mt-0.5">{edu.institution}</div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </section>
 
         {/* ======================================================== */}
-        {/* CONTACT — typographic link list, not icon cards */}
+        {/* 6. CONTACT SECTION */}
         {/* ======================================================== */}
         <section id="contato" className="scroll-mt-24">
-          <div className="border-t-2 border-ink pt-4 mb-12">
-            <span className="block text-[11px] font-mono uppercase tracking-[0.2em] text-accent-dark mb-2">Fala comigo</span>
-            <h3 className="font-serif italic text-3xl md:text-5xl text-ink mb-3">Tem um projeto? Escreve.</h3>
-            <p className="text-sm text-muted max-w-[460px]">{portfolio.profile.status}.</p>
-          </div>
+          <div className="neu-raised p-8 md:p-12 rounded-[40px] text-center">
+            <div className="max-w-2xl mx-auto mb-10">
+              <span className="text-xs font-mono font-bold uppercase tracking-widest text-accent-dark flex items-center justify-center gap-1.5 mb-2">
+                <Mail className="w-3.5 h-3.5" />
+                Contato Direto
+              </span>
+              <h3 className="font-display font-extrabold text-3xl md:text-4xl text-ink tracking-tight">
+                Vamos construir algo incrível juntos?
+              </h3>
+              <p className="text-sm text-muted mt-2">Disponibilidade imediata para contratação, liderança de squads ou projetos freelance.</p>
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 border-t border-line">
-            {contactRows.map((row) => (
+            {/* Contact Cards Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
+
+              {/* Email Card */}
               <a
-                key={row.label}
-                href={row.href}
-                target={row.external ? '_blank' : undefined}
-                rel={row.external ? 'noopener noreferrer' : undefined}
-                className="ink-link group flex items-center justify-between gap-4 py-6 border-b border-line"
+                href="mailto:sergioriman@gmail.com"
+                className="neu-raised neu-pressable rounded-[24px] p-6 flex flex-col items-center text-center"
               >
-                <span>
-                  <span className="block text-[10px] font-mono uppercase tracking-widest text-muted mb-1">{row.label}</span>
-                  <span className="block font-serif text-xl md:text-2xl text-ink group-hover:text-accent transition-colors duration-300">{row.value}</span>
-                </span>
-                <ArrowUpRight className="w-5 h-5 text-muted group-hover:text-accent opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-400 shrink-0" />
+                <div className="w-12 h-12 neu-inset text-accent-dark rounded-2xl flex items-center justify-center mb-3">
+                  <Mail className="w-5 h-5" />
+                </div>
+                <div className="text-[10px] font-mono text-muted uppercase tracking-widest font-semibold mb-1">E-mail</div>
+                <div className="text-xs font-bold text-ink break-all">sergioriman@gmail.com</div>
               </a>
-            ))}
+
+              {/* WhatsApp Card */}
+              <a
+                href="https://wa.me/5511953293094"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="neu-raised neu-pressable rounded-[24px] p-6 flex flex-col items-center text-center"
+              >
+                <div className="w-12 h-12 neu-inset text-accent-dark rounded-2xl flex items-center justify-center mb-3">
+                  <MessageSquare className="w-5 h-5" />
+                </div>
+                <div className="text-[10px] font-mono text-muted uppercase tracking-widest font-semibold mb-1">WhatsApp</div>
+                <div className="text-xs font-bold text-ink">(11) 95329-3094</div>
+              </a>
+
+              {/* LinkedIn Card */}
+              <a
+                href="https://www.linkedin.com/in/sergio-riman-dias-21714474/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="neu-raised neu-pressable rounded-[24px] p-6 flex flex-col items-center text-center"
+              >
+                <div className="w-12 h-12 neu-inset text-accent-dark rounded-2xl flex items-center justify-center mb-3">
+                  <Linkedin className="w-5 h-5" />
+                </div>
+                <div className="text-[10px] font-mono text-muted uppercase tracking-widest font-semibold mb-1">LinkedIn</div>
+                <div className="text-xs font-bold text-ink">Sérgio Riman Dias</div>
+              </a>
+
+              {/* Behance Card */}
+              <a
+                href="https://www.behance.net/sergiodias5"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="neu-raised neu-pressable rounded-[24px] p-6 flex flex-col items-center text-center"
+              >
+                <div className="w-12 h-12 neu-inset text-accent-dark rounded-2xl flex items-center justify-center mb-3 font-bold font-mono text-base">
+                  Bē
+                </div>
+                <div className="text-[10px] font-mono text-muted uppercase tracking-widest font-semibold mb-1">Behance</div>
+                <div className="text-xs font-bold text-ink">sergiodias5</div>
+              </a>
+
+            </div>
+
           </div>
         </section>
-      </motion.main>
+      </main>
 
       {/* Minimal Footer */}
-      <footer className="border-t border-line mt-24 pt-8 text-center max-w-6xl mx-auto px-4">
-        <p className="text-xs text-muted">© {new Date().getFullYear()} {portfolio.profile.name}. Todos os direitos reservados.</p>
+      <footer className="mt-20 pt-8 text-center text-xs text-muted max-w-6xl mx-auto px-4">
+        <p>© {new Date().getFullYear()} {portfolio.profile.name}. Todos os direitos reservados.</p>
         <p className="mt-1 text-[10px] font-mono text-muted/70">
-          Projetado no Figma · Codificado em React, Tailwind CSS e Motion
+          Projetado no Figma • Codificado em React, Tailwind CSS e Motion
         </p>
       </footer>
     </div>
