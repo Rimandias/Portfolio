@@ -1,21 +1,23 @@
-import { useState } from 'react';
-import { 
-  motion, 
-  AnimatePresence 
+import { useEffect, useState } from 'react';
+import {
+  motion,
+  AnimatePresence
 } from 'motion/react';
-import { 
-  Figma, 
-  Linkedin, 
-  Instagram, 
-  Mail, 
-  ExternalLink, 
-  MapPin, 
-  Briefcase, 
-  Code, 
-  Palette, 
-  Globe, 
-  MessageSquare, 
-  GraduationCap
+import {
+  Figma,
+  Linkedin,
+  Instagram,
+  Mail,
+  ExternalLink,
+  MapPin,
+  Briefcase,
+  Code,
+  Palette,
+  Globe,
+  MessageSquare,
+  GraduationCap,
+  Menu,
+  X
 } from 'lucide-react';
 import { Project, PortfolioData } from './types';
 import { DEFAULT_PORTFOLIO_DATA } from './data';
@@ -48,6 +50,37 @@ export default function App() {
     return DEFAULT_PORTFOLIO_DATA;
   });
 
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<string>('hero-section');
+
+  const navLinks = [
+    { id: 'projetos', label: 'Projetos' },
+    { id: 'habilidades', label: 'Habilidades' },
+    { id: 'experiencia', label: 'Experiência' },
+    { id: 'contato', label: 'Contato' },
+  ];
+
+  // Track which section is in view to highlight the active nav link
+  useEffect(() => {
+    const sections = navLinks
+      .map(link => document.getElementById(link.id))
+      .filter((el): el is HTMLElement => el !== null);
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveSection(entry.target.id);
+          }
+        });
+      },
+      { rootMargin: '-45% 0px -50% 0px', threshold: 0 }
+    );
+
+    sections.forEach(section => observer.observe(section));
+    return () => observer.disconnect();
+  }, []);
+
   // Render avatar with stylized initials
   const renderAvatar = (name: string, sizeClass = "w-16 h-16 text-xl") => {
     if (portfolio.profile.avatarUrl) {
@@ -78,6 +111,11 @@ export default function App() {
 
   const featuredProject = portfolio.projects.find(p => p.id === 'proj-portal-rebranding') || portfolio.projects[0];
 
+  const designSkills = portfolio.profile.skills.filter(s => s.category === "Design");
+  const productSkills = portfolio.profile.skills.filter(s => s.category !== "Design");
+  const averageLevel = (skills: typeof portfolio.profile.skills) =>
+    skills.length ? Math.round(skills.reduce((sum, s) => sum + s.level, 0) / skills.length) : 0;
+
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans selection:bg-indigo-500 selection:text-white relative pb-16">
       {/* Background ambient accents */}
@@ -103,22 +141,72 @@ export default function App() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8 text-[11px] uppercase tracking-widest font-bold text-slate-600">
-            <a href="#projetos" className="hover:text-indigo-600 transition-colors border-b border-transparent hover:border-indigo-600 pb-0.5">Projetos</a>
-            <a href="#habilidades" className="hover:text-indigo-600 transition-colors border-b border-transparent hover:border-indigo-600 pb-0.5">Habilidades</a>
-            <a href="#experiencia" className="hover:text-indigo-600 transition-colors border-b border-transparent hover:border-indigo-600 pb-0.5">Experiência</a>
-            <a href="#contato" className="hover:text-indigo-600 transition-colors border-b border-transparent hover:border-indigo-600 pb-0.5">Contato</a>
+            {navLinks.map(link => (
+              <a
+                key={link.id}
+                href={`#${link.id}`}
+                className={`transition-colors border-b pb-0.5 ${
+                  activeSection === link.id
+                    ? 'text-indigo-600 border-indigo-600'
+                    : 'border-transparent hover:text-indigo-600 hover:border-indigo-600'
+                }`}
+              >
+                {link.label}
+              </a>
+            ))}
           </nav>
 
-          {/* Contact Anchor Button */}
+          {/* Contact Anchor Button (desktop) + Mobile Menu Toggle */}
           <div className="flex items-center gap-3">
             <a
               href="#contato"
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold tracking-wide bg-slate-900 hover:bg-indigo-600 text-white transition-all duration-300 shadow-sm"
+              className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold tracking-wide bg-slate-900 hover:bg-indigo-600 text-white transition-all duration-300 shadow-sm"
             >
               <span>Contato</span>
             </a>
+            <button
+              type="button"
+              onClick={() => setIsMenuOpen(prev => !prev)}
+              aria-expanded={isMenuOpen}
+              aria-controls="mobile-nav-menu"
+              aria-label={isMenuOpen ? 'Fechar menu' : 'Abrir menu'}
+              className="md:hidden flex items-center justify-center w-10 h-10 rounded-xl bg-slate-100 text-slate-800 hover:bg-slate-200 transition-colors"
+            >
+              {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Navigation Panel */}
+        <AnimatePresence>
+          {isMenuOpen && (
+            <motion.nav
+              id="mobile-nav-menu"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2, ease: 'easeInOut' }}
+              className="md:hidden overflow-hidden"
+            >
+              <div className="max-w-6xl mx-auto flex flex-col gap-1 pt-4 text-sm font-semibold text-slate-700">
+                {navLinks.map(link => (
+                  <a
+                    key={link.id}
+                    href={`#${link.id}`}
+                    onClick={() => setIsMenuOpen(false)}
+                    className={`px-2 py-2.5 rounded-lg transition-colors ${
+                      activeSection === link.id
+                        ? 'text-indigo-600 bg-indigo-50'
+                        : 'hover:text-indigo-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    {link.label}
+                  </a>
+                ))}
+              </div>
+            </motion.nav>
+          )}
+        </AnimatePresence>
       </header>
 
       {/* Main content */}
@@ -473,11 +561,10 @@ export default function App() {
               <div className="space-y-4">
                 <h4 className="font-display font-bold text-sm text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-2">
                   <Palette className="w-4 h-4 text-indigo-600" />
-                  Visual Design & UX/UI (100%)
+                  Visual Design & UX/UI ({averageLevel(designSkills)}%)
                 </h4>
                 <div className="space-y-3.5">
-                  {portfolio.profile.skills
-                    .filter(s => s.category === "Design")
+                  {designSkills
                     .map((skill, index) => (
                       <div key={index} className="space-y-1">
                         <div className="flex justify-between items-center text-xs">
@@ -502,11 +589,10 @@ export default function App() {
               <div className="space-y-4">
                 <h4 className="font-display font-bold text-sm text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-2">
                   <Briefcase className="w-4 h-4 text-emerald-600" />
-                  Product Management (90%)
+                  Product Management ({averageLevel(productSkills)}%)
                 </h4>
                 <div className="space-y-3.5">
-                  {portfolio.profile.skills
-                    .filter(s => s.category !== "Design")
+                  {productSkills
                     .map((skill, index) => (
                       <div key={index} className="space-y-1">
                         <div className="flex justify-between items-center text-xs">
